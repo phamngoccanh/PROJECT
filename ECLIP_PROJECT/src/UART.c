@@ -1,0 +1,65 @@
+/*
+ * UART.c
+ *
+ *  Created on: Dec 24, 2020
+ *      Author: Admin
+ */
+
+#include "stm32f10x.h"
+#include "UART.h"
+#include "stdio.h"
+void uart_config()
+{
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);//ENABLE CLOCK CHO UART1
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);//PA9 TX;PA10 RX;=>ENABLE CLOCK CHO POART A
+
+	//CAU HINH CHO CHAN GPIO TX VA RX
+	GPIO_InitTypeDef GPIO_STRUCT;
+	//CAU HINH CHO TX
+	GPIO_STRUCT.GPIO_Pin=GPIO_Pin_9;
+	GPIO_STRUCT.GPIO_Speed=GPIO_Speed_50MHz;
+	GPIO_STRUCT.GPIO_Mode=GPIO_Mode_AF_PP;
+	GPIO_Init(GPIOA,&GPIO_STRUCT);
+	//CAU HINH CHO RX
+	GPIO_STRUCT.GPIO_Pin=GPIO_Pin_10;
+	GPIO_STRUCT.GPIO_Speed=GPIO_Speed_50MHz;
+	GPIO_STRUCT.GPIO_Mode=GPIO_Mode_IN_FLOATING;
+	GPIO_Init(GPIOA,&GPIO_STRUCT);
+
+	//CAU HINH CHO USART
+	USART_InitTypeDef USART_STRUCT;
+	USART_STRUCT.USART_BaudRate=9600;
+	USART_STRUCT.USART_HardwareFlowControl=USART_HardwareFlowControl_None;
+	USART_STRUCT.USART_Mode=USART_Mode_Tx|USART_Mode_Rx;
+	USART_STRUCT.USART_Parity=USART_Parity_No;
+	USART_STRUCT.USART_StopBits=USART_StopBits_1;
+	USART_STRUCT.USART_WordLength=USART_WordLength_8b;
+	//KHOI DONG CAU HINH
+	USART_Init(USART1,&USART_STRUCT);
+
+	USART_ClearITPendingBit(USART1, USART_IT_RXNE);// XOA CO NGAT RX
+	USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);//BAT NGAT CHO RX
+	USART_Cmd(USART1, ENABLE);//CHO PHEP HOAT DONG
+
+	//CAU HINH ƯU TIEN NGAT CHO NVIC
+	NVIC_InitTypeDef NVIC_STRUCT;
+	NVIC_STRUCT.NVIC_IRQChannel=USART1_IRQn;
+	NVIC_STRUCT.NVIC_IRQChannelPreemptionPriority=0;
+	NVIC_STRUCT.NVIC_IRQChannel=1;
+	NVIC_Init(&NVIC_STRUCT);
+
+}
+
+void send_data(char *a)
+{
+for (int i=0;i<sizeof(a);i++)
+
+	{
+	while (USART_GetFlagStatus(USART1, USART_FLAG_TXE)==RESET)
+	 USART_SendData(USART1,*(a+i));
+	}
+
+}
+
+//revice data lay trong ham ngat dat o main
+
